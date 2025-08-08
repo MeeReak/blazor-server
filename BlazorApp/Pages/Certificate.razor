@@ -1,0 +1,101 @@
+﻿@page "/certificate"
+@using BlazorApp.Dto.CertificateDto
+@using BlazorApp.Helper.Pagination
+@using BlazorApp.Interface.ICertificate
+@inject ICertificateService Service
+@inject IJSRuntime JS
+
+<PageTitle>Certificate</PageTitle>
+
+<MudOverlay Visible="_isLoading" Style="cursor: not-allowed" />
+
+<div style="pointer-events:@(_isLoading ? "none" : "auto")">
+    <h1>Certificate</h1>
+
+    <MudTable Items="@_certificate" Hover="true" Bordered="true" Breakpoint="Breakpoint.Sm" Loading="@_isLoading" LoadingProgressColor="Color.Info">
+        <HeaderContent>
+            <MudTh>Nr</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Degree</MudTh>
+            <MudTh>Url</MudTh>
+            <MudTh>Issue</MudTh>
+            <MudTh>Action</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Nr">@context.Number</MudTd>
+            <MudTd DataLabel="NameEn">@context.NameEn</MudTd>
+            <MudTd DataLabel="Degree">@context.Degree</MudTd>
+            <MudTd DataLabel="Url" Style="display: flex; gap: 0 20px;">
+                <MudLink Href="@(context.CertificateVerifyUrl)" Target="_blank">
+                    @(new Uri(context.CertificateVerifyUrl).Host)
+                </MudLink>
+                <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Style="cursor:pointer;" @onclick="() => CopyUrlToClipboard(context.CertificateVerifyUrl)"/>
+            </MudTd>
+            <MudTd DataLabel="Name">@context.IsSignedWithBlockchain</MudTd>
+            <MudTd DataLabel="Action">
+                <MudLink Href=@($"certificate/{context.CertificateOaGuid}")>
+                    <MudIcon Icon="@Icons.Material.Filled.Edit" Style="cursor:pointer;" />
+                </MudLink>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+
+    <MudPagination Variant="Variant.Filled"
+                   Count="@_pageCount"
+                   Selected="@_selected"
+                   SelectedChanged="OnPageChanged"
+                   Style="position:fixed; bottom: 20px;"/>
+
+</div>
+
+<script>
+    function copyTextToClipboard(text) {
+      navigator.clipboard.writeText(text).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    }
+</script>
+
+@code {
+    private List<CertificateReadDto> _certificate = [];
+    private bool _isLoading = true;
+    private int _selected = 1;
+    private int _pageCount;
+    private const int PageSize = 10;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPageAsync(_selected);
+    }
+
+    private async Task OnPageChanged(int page)
+    {
+        _selected = page;
+        await LoadPageAsync(page);
+    }
+
+    private async Task LoadPageAsync(int page)
+    {
+        _isLoading = true;
+        var param = new PaginationQueryParams
+        {
+            Skip = (page - 1) * PageSize,
+            Top = PageSize
+        };
+
+        var response = await Service.GetCertificatePagedAsync(param);
+        _certificate = response.Value;
+        _pageCount = (int)Math.Ceiling(response.TotalCount / (double)PageSize);
+
+        _isLoading = false;
+    }
+
+    private async Task CopyUrlToClipboard(string url)
+    {
+        if (!string.IsNullOrWhiteSpace(url))
+        {
+            await JS.InvokeVoidAsync("copyTextToClipboard", url);
+        }
+    }
+
+}

@@ -1,6 +1,6 @@
 ﻿{
    "CodeGenerationMode": 4,
-   "ContextClassName": "CoffeeContext",
+   "ContextClassName": "SampleContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
@@ -15,11 +15,11 @@
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "[dbo].[Categories]",
+         "Name": "[dbo].[Certificate]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Items]",
+         "Name": "[dbo].[University]",
          "ObjectType": 0
       }
    ],

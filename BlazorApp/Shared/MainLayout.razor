@@ -7,10 +7,9 @@
 <MudThemeProvider @bind-IsDarkMode="@_isDarkMode" Theme="_theme" />
 <MudLayout>
     <MudAppBar Style="align-items: end">
-        @* <div>
+        <div>
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-            My Application
-        </div> *@
+        </div>
         <MudSwitch @bind-Value="_isDarkMode" Color="Color.Primary" Class="ma-4" T="bool" />
     </MudAppBar>
     <MudDrawer @bind-Open="@_drawerOpen">

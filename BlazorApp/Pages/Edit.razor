@@ -1,0 +1,82 @@
+﻿@page "/certificate/{id}"
+@using BlazorApp.Dto.CertificateDto
+@using BlazorApp.Interface.ICertificate
+@inject ICertificateService Service
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Certificate Detail</PageTitle>
+
+@if (_isLoading)
+{
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+}
+else
+{
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h5">Edit Certificate</MudText>
+
+        <MudForm @ref="_form" Model="_certificate">
+            <MudTextField @bind-Value="_certificate.NameEn" Label="Name (EN)" />
+            <MudTextField @bind-Value="_certificate.NameKh" Label="Name (KH)" />
+            <MudTextField @bind-Value="_certificate.StudentId" Label="Student ID" />
+            <MudTextField @bind-Value="_certificate.NationalId" Label="National ID" />
+            <MudTextField @bind-Value="_certificate.Degree" Label="Degree" />
+            <MudTextField @bind-Value="_certificate.DegreeKm" Label="Degree (Khmer)" />
+            <MudTextField @bind-Value="_certificate.DataJson" Label="Data JSON" Lines="5" />
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_isSaving">
+                @(_isSaving ? "Saving..." : "Save")
+            </MudButton>
+            <MudButton Variant="Variant.Text" OnClick="@GoBack">Cancel</MudButton>
+        </MudForm>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    private CertificateReadDto _certificate = new();
+    private MudForm _form;
+    private bool _isLoading = true;
+    private bool _isSaving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCertificateAsync();
+    }
+
+    private async Task LoadCertificateAsync()
+    {
+        _isLoading = true;
+        _certificate = await Service.GetCertificateByGuid(Id);
+        _isLoading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        await _form.Validate();
+        if (!_form.IsValid) return;
+
+        _isSaving = true;
+        try
+        {
+            await Service.UpdateCertificateAsync(_certificate);
+            Snackbar.Add("Certificate updated successfully", Severity.Success);
+            Navigation.NavigateTo("/certificate");
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSaving = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/certificate");
+    }
+}

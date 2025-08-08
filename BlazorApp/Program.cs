@@ -1,4 +1,6 @@
-using BlazorApp.Data;
+using BlazorApp.Interface.ICertificate;
+using BlazorApp.Mapping;
+using BlazorApp.Service;
 using Microsoft.EntityFrameworkCore;
 using mptc.dgc.sample.infrastructure.Models;
 using MudBlazor.Services;
@@ -6,10 +8,14 @@ using MudBlazor.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton<WeatherForecastService>();
-builder.Services.AddDbContext<CoffeeContext>(
+
+builder.Services.AddScoped<ICertificateMapper, CertificateMapper>();
+builder.Services.AddScoped<ICertificateService, CertificateService>();
+
+builder.Services.AddDbContext<SampleContext>(
     options => options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
 builder.Services.AddMudServices();
 var app = builder.Build();
@@ -22,7 +28,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
