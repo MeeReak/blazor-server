@@ -31,15 +31,29 @@ namespace BlazorApp.Service
             cert.NameKh = dto.NameKh;
             cert.Degree = dto.Degree;
             cert.DegreeKm = dto.DegreeKm;
-            cert.RawDataJson = JsonConvert.SerializeObject(dto.DataJson);
+            cert.RawDataJson = dto.DataJson;
 
             await dbContext.SaveChangesAsync();
         }
 
-
         public async Task<ResponsePagingDto<CertificateReadDto>> GetCertificatePagedAsync(PaginationQueryParams param)
         {
-            return await dbContext.Certificates.AsNoTracking().OrderBy(u => u.CreatedDate).ToPagedResultAsync(param.Skip, param.Top, mapper.ToReadDto, contextAccessor.HttpContext!);
+            var query = dbContext.Certificates.AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(param.Search))
+            {
+                query = query.Where(x => x.NameEn.Contains(param.Search));
+            }
+
+            if (param.Filter is not null)
+            {
+                query = query.Where(x => x.IsSignedWithBlockchain == param.Filter);
+            }
+
+            query = query.OrderBy(u => u.CreatedDate);
+
+            return await query.ToPagedResultAsync(param.Skip, param.Top, mapper.ToReadDto, contextAccessor.HttpContext!);
         }
+
     }
 }

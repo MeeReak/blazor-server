@@ -23,7 +23,7 @@ else
             <MudTextField @bind-Value="_certificate.NationalId" Label="National ID" />
             <MudTextField @bind-Value="_certificate.Degree" Label="Degree" />
             <MudTextField @bind-Value="_certificate.DegreeKm" Label="Degree (Khmer)" />
-            <MudTextField @bind-Value="_certificate.DataJson" Label="Data JSON" Lines="5" />
+            <MudTextField @bind-Value="_certificate.DataJson" Label="Data JSON" Lines="10" />
 
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_isSaving">
                 @(_isSaving ? "Saving..." : "Save")

@@ -3,7 +3,7 @@
 @using BlazorApp.Helper.Pagination
 @using BlazorApp.Interface.ICertificate
 @inject ICertificateService Service
-@inject IJSRuntime JS
+@inject IJSRuntime Js
 
 <PageTitle>Certificate</PageTitle>
 
@@ -11,6 +11,26 @@
 
 <div style="pointer-events:@(_isLoading ? "none" : "auto")">
     <h1>Certificate</h1>
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0 20px;">
+        <MudPaper Class="pa-4 mb-4 d-flex" Style="gap: 20px;">
+            <MudTextField @bind-Value="_searchText"
+                          Placeholder="Search by name..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true"
+                          OnBlur="ApplyFilters"
+                          OnKeyDown="@(e => { if (e.Key == "Enter") ApplyFilters(); })" />
+        </MudPaper>
+        <MudSelect T="bool?" Label="Blockchain Signed"
+                   Value="_blockchainFilter"
+                   ValueChanged="OnBlockchainFilterChanged"
+                   Style="width:200px;">
+            <MudSelectItem T="bool?" Value="null">All</MudSelectItem>
+            <MudSelectItem T="bool?" Value="@(true)">True</MudSelectItem>
+            <MudSelectItem T="bool?" Value="@(false)">False</MudSelectItem>
+        </MudSelect>
+    </div>
+
 
     <MudTable Items="@_certificate" Hover="true" Bordered="true" Breakpoint="Breakpoint.Sm" Loading="@_isLoading" LoadingProgressColor="Color.Info">
         <HeaderContent>
@@ -18,20 +38,19 @@
             <MudTh>Name</MudTh>
             <MudTh>Degree</MudTh>
             <MudTh>Url</MudTh>
-            <MudTh>Issue</MudTh>
+            <MudTh>Signed With Blockchain</MudTh>
             <MudTh>Action</MudTh>
         </HeaderContent>
         <RowTemplate>
-            <MudTd DataLabel="Nr">@context.Number</MudTd>
+            <MudTd DataLabel="Nr">@context.StudentId</MudTd>
             <MudTd DataLabel="NameEn">@context.NameEn</MudTd>
             <MudTd DataLabel="Degree">@context.Degree</MudTd>
             <MudTd DataLabel="Url" Style="display: flex; gap: 0 20px;">
                 <MudLink Href="@(context.CertificateVerifyUrl)" Target="_blank">
-                    @(new Uri(context.CertificateVerifyUrl).Host)
                 </MudLink>
                 <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Style="cursor:pointer;" @onclick="() => CopyUrlToClipboard(context.CertificateVerifyUrl)"/>
             </MudTd>
-            <MudTd DataLabel="Name">@context.IsSignedWithBlockchain</MudTd>
+            <MudTd DataLabel="Signed">@context.IsSignedWithBlockchain</MudTd>
             <MudTd DataLabel="Action">
                 <MudLink Href=@($"certificate/{context.CertificateOaGuid}")>
                     <MudIcon Icon="@Icons.Material.Filled.Edit" Style="cursor:pointer;" />
@@ -45,7 +64,6 @@
                    Selected="@_selected"
                    SelectedChanged="OnPageChanged"
                    Style="position:fixed; bottom: 20px;"/>
-
 </div>
 
 <script>
@@ -63,6 +81,9 @@
     private int _pageCount;
     private const int PageSize = 10;
 
+    private string _searchText = "";
+    private bool? _blockchainFilter = null;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadPageAsync(_selected);
@@ -77,10 +98,14 @@
     private async Task LoadPageAsync(int page)
     {
         _isLoading = true;
+        StateHasChanged(); 
+
         var param = new PaginationQueryParams
         {
             Skip = (page - 1) * PageSize,
-            Top = PageSize
+            Top = PageSize,
+            Search = _searchText,
+            Filter = _blockchainFilter
         };
 
         var response = await Service.GetCertificatePagedAsync(param);
@@ -88,14 +113,27 @@
         _pageCount = (int)Math.Ceiling(response.TotalCount / (double)PageSize);
 
         _isLoading = false;
+        StateHasChanged();
     }
 
     private async Task CopyUrlToClipboard(string url)
     {
         if (!string.IsNullOrWhiteSpace(url))
         {
-            await JS.InvokeVoidAsync("copyTextToClipboard", url);
+            await Js.InvokeVoidAsync("copyTextToClipboard", url);
         }
     }
 
+    private async Task ApplyFilters()
+    {
+        _selected = 1;
+        await LoadPageAsync(_selected);
+    }
+
+    private async Task OnBlockchainFilterChanged(bool? value)
+    {
+        _blockchainFilter = value;
+        _selected = 1;
+        await LoadPageAsync(_selected);
+    }
 }
