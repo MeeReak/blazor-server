@@ -1,17 +1,20 @@
 ﻿@page "/certificate"
 @using BlazorApp.Dto.CertificateDto
+@using BlazorApp.Dto.UniversityDto
 @using BlazorApp.Helper.Pagination
 @using BlazorApp.Interface.ICertificate
+@using BlazorApp.Interface.IUniversity
 @inject ICertificateService Service
+@inject IUniversityService UniversityService
 @inject IJSRuntime Js
 
 <PageTitle>Certificate</PageTitle>
 
 <MudOverlay Visible="_isLoading" Style="cursor: not-allowed" />
 
-<div style="pointer-events:@(_isLoading ? "none" : "auto")">
-    <h1>Certificate</h1>
-    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0 20px;">
+<div style="pointer-events:@(_isLoading ? "none" : "auto"); margin-top: 20px">
+    <h1 style="display: none;">Certificate</h1>
+    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0 20px;">
         <MudPaper Class="pa-4 mb-4 d-flex" Style="gap: 20px;">
             <MudTextField @bind-Value="_searchText"
                           Placeholder="Search by name..."
@@ -22,12 +25,23 @@
                           OnKeyDown="@(e => { if (e.Key == "Enter") ApplyFilters(); })" />
         </MudPaper>
         <MudSelect T="bool?" Label="Blockchain Signed"
-                   Value="_blockchainFilter"
-                   ValueChanged="OnBlockchainFilterChanged"
-                   Style="width:200px;">
+                   @bind-Value="_blockchainFilter"
+                   Style="width:200px;"
+                   OnKeyDown="@(e => { if (e.Key == "Enter") ApplyFilters(); })">
             <MudSelectItem T="bool?" Value="null">All</MudSelectItem>
             <MudSelectItem T="bool?" Value="@(true)">True</MudSelectItem>
             <MudSelectItem T="bool?" Value="@(false)">False</MudSelectItem>
+        </MudSelect>
+
+        <MudSelect T="Guid?" Label="University"
+                   @bind-Value="_selectedUniversityId"
+                   Style="width:250px;"
+                   OnKeyDown="@(e => { if (e.Key == "Enter") ApplyFilters(); })">
+            <MudSelectItem T="Guid?" Value="null">All Universities</MudSelectItem>
+            @foreach (var uni in _universities)
+            {
+                <MudSelectItem T="Guid?" Value="@(uni.Id)">@uni.Name</MudSelectItem>
+            }
         </MudSelect>
     </div>
 
@@ -76,17 +90,31 @@
 
 @code {
     private List<CertificateReadDto> _certificate = [];
+    private Guid? _selectedUniversityId;
+    private List<UniversityReadDto> _universities = new();
     private bool _isLoading = true;
     private int _selected = 1;
     private int _pageCount;
     private const int PageSize = 10;
 
     private string _searchText = "";
-    private bool? _blockchainFilter = null;
+    private bool? _blockchainFilter;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadUniversitiesAsync();
         await LoadPageAsync(_selected);
+    }
+
+    private async Task LoadUniversitiesAsync()
+    {
+        var response = await UniversityService.GetUniversityPagedAsync(new PaginationQueryParams
+        {
+            Skip = 0,
+            Top = 1000 
+        });
+
+        _universities = response.Value;
     }
 
     private async Task OnPageChanged(int page)
@@ -105,7 +133,8 @@
             Skip = (page - 1) * PageSize,
             Top = PageSize,
             Search = _searchText,
-            Filter = _blockchainFilter
+            Filter = _blockchainFilter,
+            UniversityId = _selectedUniversityId
         };
 
         var response = await Service.GetCertificatePagedAsync(param);
@@ -115,6 +144,7 @@
         _isLoading = false;
         StateHasChanged();
     }
+
 
     private async Task CopyUrlToClipboard(string url)
     {
@@ -130,10 +160,17 @@
         await LoadPageAsync(_selected);
     }
 
-    private async Task OnBlockchainFilterChanged(bool? value)
-    {
-        _blockchainFilter = value;
-        _selected = 1;
-        await LoadPageAsync(_selected);
-    }
+    // private async Task OnBlockchainFilterChanged(bool? value)
+    // {
+    //     _blockchainFilter = value;
+    //     _selected = 1;
+    //     await LoadPageAsync(_selected);
+    // }
+
+    // private async Task OnUniversityChanged(Guid? value)
+    // {
+    //     _selectedUniversityId = value;
+    //     _selected = 1;
+    //     await LoadPageAsync(_selected);
+    // }
 }

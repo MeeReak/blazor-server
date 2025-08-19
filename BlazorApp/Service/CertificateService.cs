@@ -50,6 +50,11 @@ namespace BlazorApp.Service
                 query = query.Where(x => x.IsSignedWithBlockchain == param.Filter);
             }
 
+            if (param.UniversityId is not null)
+            {
+                query = query.Where(x => x.UniversityId == param.UniversityId);
+            }
+
             query = query.OrderBy(u => u.CreatedDate);
 
             return await query.ToPagedResultAsync(param.Skip, param.Top, mapper.ToReadDto, contextAccessor.HttpContext!);

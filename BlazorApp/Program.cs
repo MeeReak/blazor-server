@@ -1,4 +1,5 @@
 using BlazorApp.Interface.ICertificate;
+using BlazorApp.Interface.IUniversity;
 using BlazorApp.Mapping;
 using BlazorApp.Service;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,8 @@ builder.Services.AddServerSideBlazor();
 
 builder.Services.AddScoped<ICertificateMapper, CertificateMapper>();
 builder.Services.AddScoped<ICertificateService, CertificateService>();
+builder.Services.AddScoped<IUniversityMapper, UniversityMapper>();
+builder.Services.AddScoped<IUniversityService, UniversityService>();
 
 builder.Services.AddDbContext<SampleContext>(
     options => options.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")));
